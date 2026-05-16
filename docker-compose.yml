@@ -1,0 +1,195 @@
+networks:
+  advance-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
+  keycloak_data:
+  grafana_data:
+
+services:
+
+  # ──────────────────────────────────────────
+  # PostgreSQL 15
+  # ──────────────────────────────────────────
+  advance-postgres:
+    image: postgres:15-alpine
+    container_name: advance-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: advance_user
+      POSTGRES_PASSWORD: advance_pass
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U advance_user']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Redis 7
+  # ──────────────────────────────────────────
+  advance-redis:
+    image: redis:7-alpine
+    container_name: advance-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 60 1
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Apache Kafka 3.6 (KRaft, без Zookeeper)
+  # ──────────────────────────────────────────
+  advance-kafka:
+    image: apache/kafka:3.6.2
+    container_name: advance-kafka
+    restart: unless-stopped
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9093,EXTERNAL://:9092,CONTROLLER://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://advance-kafka:9093,EXTERNAL://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@advance-kafka:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ['CMD-SHELL', 'kafka-topics.sh --bootstrap-server localhost:9093 --list']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Kafka UI (Provectus)
+  # ──────────────────────────────────────────
+  advance-kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: advance-kafka-ui
+    restart: unless-stopped
+    ports:
+      - '8090:8080'
+    depends_on:
+      advance-kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: advance-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: advance-kafka:9093
+      AUTH_TYPE: DISABLED
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Keycloak 23
+  # ──────────────────────────────────────────
+  advance-keycloak:
+    image: quay.io/keycloak/keycloak:23.0.7
+    container_name: advance-keycloak
+    restart: unless-stopped
+    ports:
+      - '8180:8080'
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://advance-postgres:5432/advance_identity
+      KC_DB_USERNAME: advance_user
+      KC_DB_PASSWORD: advance_pass
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./infra/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      advance-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8080/health/ready || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Jaeger (distributed tracing)
+  # ──────────────────────────────────────────
+  advance-jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: advance-jaeger
+    restart: unless-stopped
+    ports:
+      - '16686:16686'
+      - '14268:14268'
+      - '6831:6831/udp'
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Prometheus
+  # ──────────────────────────────────────────
+  advance-prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: advance-prometheus
+    restart: unless-stopped
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - advance-network
+
+  # ──────────────────────────────────────────
+  # Grafana
+  # ──────────────────────────────────────────
+  advance-grafana:
+    image: grafana/grafana:10.4.2
+    container_name: advance-grafana
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DATASOURCES_DEFAULT_TYPE: prometheus
+      GF_DATASOURCES_DEFAULT_URL: http://advance-prometheus:9090
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - advance-prometheus
+    networks:
+      - advance-network

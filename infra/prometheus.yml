@@ -1,0 +1,74 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: advance-service
+
+scrape_configs:
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: advance-gateway
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-gateway:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-gateway
+
+  - job_name: advance-identity
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-identity:8081']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-identity
+
+  - job_name: advance-core
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-core:8082']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-core
+
+  - job_name: advance-payment
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-payment:8083']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-payment
+
+  - job_name: advance-scoring
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-scoring:8084']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-scoring
+
+  - job_name: advance-reference
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-reference:8085']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-reference
+
+  - job_name: advance-notification
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['advance-notification:8086']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: advance-notification

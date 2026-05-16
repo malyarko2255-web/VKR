@@ -1,0 +1,121 @@
+{
+  "realm": "advance",
+  "enabled": true,
+  "displayName": "Advance Service",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      { "name": "DRIVER",           "description": "Водитель" },
+      { "name": "CONTRACTOR",       "description": "Контрагент" },
+      { "name": "DISPATCHER",       "description": "Диспетчер" },
+      { "name": "FINANCE_OFFICER",  "description": "Финансовый сотрудник" },
+      { "name": "FINANCE_DIRECTOR", "description": "Финансовый директор" },
+      { "name": "ADMIN",            "description": "Администратор" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "advance-backend",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "advance-backend-secret",
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["*"],
+      "webOrigins": ["*"]
+    },
+    {
+      "clientId": "advance-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["+"]
+    }
+  ],
+  "users": [
+    {
+      "username": "driver1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "driver1@advance.local",
+      "firstName": "Иван",
+      "lastName": "Водитель",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["DRIVER"]
+    },
+    {
+      "username": "dispatcher1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "dispatcher1@advance.local",
+      "firstName": "Пётр",
+      "lastName": "Диспетчер",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["DISPATCHER"]
+    },
+    {
+      "username": "finance1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "finance1@advance.local",
+      "firstName": "Анна",
+      "lastName": "Финансист",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["FINANCE_DIRECTOR"]
+    },
+    {
+      "username": "admin1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin1@advance.local",
+      "firstName": "Сергей",
+      "lastName": "Администратор",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN"]
+    }
+  ]
+}
