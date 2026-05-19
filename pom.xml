@@ -129,5 +129,15 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <!-- Отключаем spring-boot:run на корневом агрегаторном модуле -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
