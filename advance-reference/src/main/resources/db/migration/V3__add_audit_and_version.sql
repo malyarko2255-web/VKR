@@ -1,0 +1,27 @@
+-- V3: audit timestamps + optimistic locking versions
+
+ALTER TABLE contractors
+    ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN version    INTEGER      NOT NULL DEFAULT 0;
+
+ALTER TABLE vehicles
+    ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN version    INTEGER      NOT NULL DEFAULT 0;
+
+ALTER TABLE routes
+    ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN version    INTEGER      NOT NULL DEFAULT 0;
+
+ALTER TABLE fuel_norms
+    ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN version    INTEGER      NOT NULL DEFAULT 0;
+
+ALTER TABLE driver_limits
+    ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN version    INTEGER      NOT NULL DEFAULT 0;
+
+ALTER TABLE drivers
+    ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
