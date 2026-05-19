@@ -1,17 +1,15 @@
-package ru.finuniversity.advance.identity.dto;
-
-import ru.finuniversity.advance.identity.entity.UserRole;
+package ru.finuniversity.advance.scoring.dto;
 
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserDto(
+public record IdentityUserDto(
         UUID id,
         String keycloakId,
         String username,
         String fullName,
         String email,
-        UserRole role,
+        String role,
         Boolean active,
         Instant createdAt
 ) {}

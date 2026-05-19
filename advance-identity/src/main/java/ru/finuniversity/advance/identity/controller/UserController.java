@@ -55,7 +55,8 @@ public class UserController {
                 user.getFullName(),
                 user.getEmail(),
                 user.getRole(),
-                user.getActive()
+                user.getActive(),
+                user.getCreatedAt()
         );
     }
 }
