@@ -66,6 +66,7 @@ public class PaymentCommandConsumer {
                 event.advanceId(),
                 "PAYMENT_RESULT",
                 LocalDateTime.now(),
+                payment.getRecipientId().toString(),
                 payment.getId().toString(),
                 success,
                 payment.getErrorMessage(),

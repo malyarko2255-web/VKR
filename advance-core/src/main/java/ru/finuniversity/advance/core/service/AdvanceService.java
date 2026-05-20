@@ -157,6 +157,7 @@ public class AdvanceService {
                 advanceId.toString(),
                 "ADVANCE_APPROVED",
                 LocalDateTime.now(),
+                advance.getDriverId().toString(),
                 approverId.toString(),
                 dto.comment(),
                 newStatus
@@ -202,6 +203,7 @@ public class AdvanceService {
                 advanceId.toString(),
                 "ADVANCE_REJECTED",
                 LocalDateTime.now(),
+                advance.getDriverId().toString(),
                 rejecterId.toString(),
                 dto.reason()
         ));

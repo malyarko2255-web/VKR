@@ -7,6 +7,7 @@ public record AdvanceRejectedEvent(
         String advanceId,
         String eventType,
         LocalDateTime occurredAt,
+        String driverId,
         String rejectedBy,
         String reason
 ) implements AdvanceEvent {}

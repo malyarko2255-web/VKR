@@ -50,6 +50,7 @@ class OutboxPublisherTest {
                 "PAYMENT_RESULT",
                 LocalDateTime.now(),
                 UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
                 true, null, "0"
         );
         samplePayload = objectMapper.writeValueAsString(event);

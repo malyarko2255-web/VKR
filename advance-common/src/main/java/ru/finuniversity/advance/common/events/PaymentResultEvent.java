@@ -7,6 +7,7 @@ public record PaymentResultEvent(
         String advanceId,
         String eventType,
         LocalDateTime occurredAt,
+        String driverId,
         String paymentId,
         Boolean success,
         String errorMessage,

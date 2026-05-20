@@ -10,8 +10,10 @@ import ru.finuniversity.advance.common.exception.AdvanceNotFoundException;
 import ru.finuniversity.advance.identity.dto.StatusUpdateRequest;
 import ru.finuniversity.advance.identity.dto.UserDto;
 import ru.finuniversity.advance.identity.entity.User;
+import ru.finuniversity.advance.identity.entity.UserRole;
 import ru.finuniversity.advance.identity.repository.UserRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,6 +36,14 @@ public class UserController {
         return userRepository.findById(id)
                 .map(this::toDto)
                 .orElseThrow(() -> new AdvanceNotFoundException(id.toString()));
+    }
+
+    @GetMapping("/by-role/{role}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE_DIRECTOR', 'DISPATCHER')")
+    public List<UUID> getIdsByRole(@PathVariable String role) {
+        UserRole userRole = UserRole.valueOf(role.toUpperCase());
+        return userRepository.findByRoleAndActiveTrue(userRole)
+                .stream().map(User::getId).toList();
     }
 
     @PutMapping("/{id}/status")

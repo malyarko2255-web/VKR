@@ -8,6 +8,7 @@ public record AdvanceApprovedEvent(
         String advanceId,
         String eventType,
         LocalDateTime occurredAt,
+        String driverId,
         String approvedBy,
         String comment,
         AdvanceStatus newStatus
