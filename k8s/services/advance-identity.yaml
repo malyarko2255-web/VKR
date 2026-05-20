@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: advance-identity
+  namespace: advance-system
+  labels:
+    app: advance-identity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: advance-identity
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: advance-identity
+    spec:
+      containers:
+        - name: advance-identity
+          image: ghcr.io/finuniversity/advance-identity:latest
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: advance-config
+            - secretRef:
+                name: advance-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: advance-identity
+  namespace: advance-system
+spec:
+  selector:
+    app: advance-identity
+  ports:
+    - port: 8082
+      targetPort: 8082

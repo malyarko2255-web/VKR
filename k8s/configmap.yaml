@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: advance-config
+  namespace: advance-system
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "advance-kafka:9093"
+  REDIS_HOST: "advance-redis"
+  REDIS_PORT: "6379"
+  KEYCLOAK_URL: "http://advance-keycloak:8080"
+  KEYCLOAK_REALM: "advance"
+  POSTGRES_HOST: "advance-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "advance_db"
+  LOG_LEVEL: "INFO"
+  TZ: "Europe/Moscow"
