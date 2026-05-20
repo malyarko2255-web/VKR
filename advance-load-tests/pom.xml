@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ru.finuniversity.advance</groupId>
+    <artifactId>advance-load-tests</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>advance-load-tests</name>
+    <description>Gatling Load Tests for Advance Service</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <scala.version>2.13.14</scala.version>
+        <gatling.version>3.11.3</gatling.version>
+        <gatling-maven-plugin.version>4.9.2</gatling-maven-plugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gatling.highcharts</groupId>
+            <artifactId>gatling-charts-highcharts</artifactId>
+            <version>${gatling.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>${gatling-maven-plugin.version}</version>
+                <configuration>
+                    <simulationClass>ru.finuniversity.advance.AdvanceLoadTest</simulationClass>
+                    <simulationsFolder>${project.basedir}/src/gatling/scala</simulationsFolder>
+                    <resourcesFolder>${project.basedir}/src/gatling/resources</resourcesFolder>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
