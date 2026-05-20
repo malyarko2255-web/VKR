@@ -2,6 +2,9 @@ package ru.finuniversity.advance.gateway;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -13,6 +16,12 @@ import org.springframework.boot.test.context.SpringBootTest;
     }
 )
 class ApplicationTest {
+
+    @MockBean
+    ReactiveJwtDecoder reactiveJwtDecoder;
+
+    @MockBean
+    RedisRateLimiter redisRateLimiter;
 
     @Test
     void contextLoads() {

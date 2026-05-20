@@ -1,12 +1,76 @@
 spring:
   application:
     name: advance-gateway
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8088/realms/advance/protocol/openid-connect/certs
+  cloud:
+    gateway:
+      routes:
+        - id: identity-service
+          uri: ${services.identity.url:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/users/**, /api/v1/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: advance-core
+          uri: ${services.core.url:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/advances/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: payment-service
+          uri: ${services.payment.url:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/payments/**
+
+        - id: scoring-service
+          uri: ${services.scoring.url:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/scores/**, /api/v1/telematics/**
+
+        - id: reference-service
+          uri: ${services.reference.url:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/drivers/**, /api/v1/routes/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: reference-cb
+                fallbackUri: forward:/fallback/reference
+
+        - id: notification-service
+          uri: ${services.notification.url:http://localhost:8086}
+          predicates:
+            - Path=/api/v1/notifications/**
 
 server:
   port: 8080
 
 management:
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,gateway
