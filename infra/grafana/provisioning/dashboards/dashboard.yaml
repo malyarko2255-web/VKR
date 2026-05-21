@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: advance-service
+    orgId: 1
+    folder: Advance Service
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards

@@ -33,6 +33,18 @@ const AppInner: React.FC = () => {
   const { loading } = useAppSelector((s) => s.user);
 
   useEffect(() => {
+    if (process.env.REACT_APP_USE_MOCKS === 'true') {
+      const mockRole = (process.env.REACT_APP_MOCK_ROLE ?? 'DRIVER') as UserRole;
+      dispatch(setUser({
+        authenticated: true,
+        id: '11111111-1111-1111-1111-111111111111',
+        username: mockRole === 'DRIVER' ? 'driver1' : 'dispatcher1',
+        role: mockRole,
+        driverId: '11111111-1111-1111-1111-111111111111',
+      }));
+      return;
+    }
+
     keycloak
       .init({ onLoad: 'check-sso', silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html' })
       .then((authenticated) => {

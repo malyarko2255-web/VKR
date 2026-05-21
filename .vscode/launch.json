@@ -1,0 +1,75 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "advance-gateway (8080)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.gateway.Application",
+      "projectName": "advance-gateway",
+      "vmArgs": "-Dspring.profiles.active=local"
+    },
+    {
+      "type": "java",
+      "name": "advance-identity (8081)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.identity.Application",
+      "projectName": "advance-identity",
+      "vmArgs": "-Dspring.profiles.active=local"
+    },
+    {
+      "type": "java",
+      "name": "advance-core (8082)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.core.Application",
+      "projectName": "advance-core",
+      "vmArgs": "-Dspring.profiles.active=local"
+    },
+    {
+      "type": "java",
+      "name": "advance-payment (8083)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.payment.Application",
+      "projectName": "advance-payment",
+      "vmArgs": "-Dspring.profiles.active=local"
+    },
+    {
+      "type": "java",
+      "name": "advance-scoring (8084)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.scoring.Application",
+      "projectName": "advance-scoring",
+      "vmArgs": "-Dspring.profiles.active=local"
+    },
+    {
+      "type": "java",
+      "name": "advance-reference (8085)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.reference.Application",
+      "projectName": "advance-reference",
+      "vmArgs": "-Dspring.profiles.active=local"
+    },
+    {
+      "type": "java",
+      "name": "advance-notification (8086)",
+      "request": "launch",
+      "mainClass": "ru.finuniversity.advance.notification.Application",
+      "projectName": "advance-notification",
+      "vmArgs": "-Dspring.profiles.active=local"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "All Spring Services",
+      "configurations": [
+        "advance-gateway (8080)",
+        "advance-core (8082)",
+        "advance-payment (8083)",
+        "advance-scoring (8084)",
+        "advance-reference (8085)",
+        "advance-notification (8086)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

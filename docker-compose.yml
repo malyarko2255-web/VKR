@@ -189,6 +189,7 @@ services:
       GF_DATASOURCES_DEFAULT_URL: http://advance-prometheus:9090
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - advance-prometheus
     networks:
