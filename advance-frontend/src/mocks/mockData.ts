@@ -1,0 +1,185 @@
+import {
+  AdvanceStatus,
+  AdvanceType,
+  TripStage,
+  AdvanceResponse,
+  DriverLimit,
+  ActiveTrip,
+  Page,
+} from '../types/advance.types';
+
+export const MOCK_DRIVER_ID = '11111111-1111-1111-1111-111111111111';
+export const MOCK_ROUTE_ID  = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+export const mockActiveTrip: ActiveTrip = {
+  routeId: MOCK_ROUTE_ID,
+  routeName: 'Москва — Санкт-Петербург (МСК-001)',
+  tripStage: TripStage.IN_TRANSIT,
+  departureDate: '2026-05-21T06:00:00Z',
+};
+
+export const mockLimits: DriverLimit[] = [
+  {
+    advanceType: AdvanceType.FUEL,
+    monthlyLimit: 50000,
+    used: 9300,
+    available: 40700,
+  },
+  {
+    advanceType: AdvanceType.REPAIR,
+    monthlyLimit: 80000,
+    used: 12000,
+    available: 68000,
+  },
+  {
+    advanceType: AdvanceType.PER_DIEM,
+    monthlyLimit: 30000,
+    used: 3600,
+    available: 26400,
+  },
+];
+
+const myAdvances: AdvanceResponse[] = [
+  {
+    id: 'adv-11111111-1111-1111-1111-111111111111',
+    requestNo: 'ADV-2026-00847',
+    driverName: 'Иванов Иван Петрович',
+    routeName: 'Москва — Санкт-Петербург',
+    advanceType: AdvanceType.FUEL,
+    amount: 3500,
+    limitAvailable: 40700,
+    status: AdvanceStatus.APPROVED,
+    scoreAtCreation: 87,
+    autoApproved: true,
+    createdAt: '2026-05-21T09:15:00Z',
+    updatedAt: '2026-05-21T09:15:12Z',
+  },
+  {
+    id: 'adv-22222222-2222-2222-2222-222222222222',
+    requestNo: 'ADV-2026-00848',
+    driverName: 'Иванов Иван Петрович',
+    routeName: 'Москва — Санкт-Петербург',
+    advanceType: AdvanceType.REPAIR,
+    amount: 12000,
+    limitAvailable: 68000,
+    status: AdvanceStatus.DISPATCHER_REVIEW,
+    scoreAtCreation: 72,
+    autoApproved: false,
+    createdAt: '2026-05-21T11:00:00Z',
+    updatedAt: '2026-05-21T11:00:00Z',
+  },
+  {
+    id: 'adv-33333333-3333-3333-3333-333333333333',
+    requestNo: 'ADV-2026-00831',
+    driverName: 'Иванов Иван Петрович',
+    routeName: 'Москва — Казань',
+    advanceType: AdvanceType.FUEL,
+    amount: 2800,
+    limitAvailable: 40700,
+    status: AdvanceStatus.PAID,
+    scoreAtCreation: 91,
+    autoApproved: true,
+    createdAt: '2026-05-19T14:30:00Z',
+    updatedAt: '2026-05-19T16:00:00Z',
+  },
+  {
+    id: 'adv-44444444-4444-4444-4444-444444444444',
+    requestNo: 'ADV-2026-00820',
+    driverName: 'Иванов Иван Петрович',
+    routeName: 'Москва — Нижний Новгород',
+    advanceType: AdvanceType.FUEL,
+    amount: 5000,
+    limitAvailable: 40700,
+    status: AdvanceStatus.REJECTED,
+    scoreAtCreation: 45,
+    autoApproved: false,
+    rejectionReason: 'Превышен дневной лимит',
+    createdAt: '2026-05-17T10:00:00Z',
+    updatedAt: '2026-05-17T12:00:00Z',
+  },
+];
+
+const dispatcherQueue: AdvanceResponse[] = [
+  {
+    id: 'adv-aaaa1111-1111-1111-1111-111111111111',
+    requestNo: 'ADV-2026-00849',
+    driverName: 'Петров Сергей Иванович',
+    routeName: 'Москва — Воронеж',
+    advanceType: AdvanceType.FUEL,
+    amount: 4200,
+    limitAvailable: 35800,
+    status: AdvanceStatus.DISPATCHER_REVIEW,
+    scoreAtCreation: 87,
+    autoApproved: false,
+    createdAt: '2026-05-21T10:30:00Z',
+    updatedAt: '2026-05-21T10:30:00Z',
+  },
+  {
+    id: 'adv-22222222-2222-2222-2222-222222222222',
+    requestNo: 'ADV-2026-00848',
+    driverName: 'Иванов Иван Петрович',
+    routeName: 'Москва — Санкт-Петербург',
+    advanceType: AdvanceType.REPAIR,
+    amount: 12000,
+    limitAvailable: 68000,
+    status: AdvanceStatus.DISPATCHER_REVIEW,
+    scoreAtCreation: 72,
+    autoApproved: false,
+    createdAt: '2026-05-21T11:00:00Z',
+    updatedAt: '2026-05-21T11:00:00Z',
+  },
+  {
+    id: 'adv-cccc3333-3333-3333-3333-333333333333',
+    requestNo: 'ADV-2026-00846',
+    driverName: 'Сидоров Алексей Михайлович',
+    routeName: 'Москва — Тула',
+    advanceType: AdvanceType.FUEL,
+    amount: 1800,
+    limitAvailable: 42000,
+    status: AdvanceStatus.DISPATCHER_REVIEW,
+    scoreAtCreation: 91,
+    autoApproved: false,
+    createdAt: '2026-05-21T08:15:00Z',
+    updatedAt: '2026-05-21T08:15:00Z',
+  },
+  {
+    id: 'adv-dddd4444-4444-4444-4444-444444444444',
+    requestNo: 'ADV-2026-00845',
+    driverName: 'Козлов Дмитрий Александрович',
+    routeName: 'Москва — Ярославль',
+    advanceType: AdvanceType.PER_DIEM,
+    amount: 6500,
+    limitAvailable: 23500,
+    status: AdvanceStatus.DISPATCHER_REVIEW,
+    scoreAtCreation: 65,
+    autoApproved: false,
+    createdAt: '2026-05-21T07:45:00Z',
+    updatedAt: '2026-05-21T07:45:00Z',
+  },
+  {
+    id: 'adv-eeee5555-5555-5555-5555-555555555555',
+    requestNo: 'ADV-2026-00844',
+    driverName: 'Новиков Павел Сергеевич',
+    routeName: 'Москва — Екатеринбург',
+    advanceType: AdvanceType.FUEL,
+    amount: 8900,
+    limitAvailable: 28000,
+    status: AdvanceStatus.DISPATCHER_REVIEW,
+    scoreAtCreation: 58,
+    autoApproved: false,
+    createdAt: '2026-05-21T07:00:00Z',
+    updatedAt: '2026-05-21T07:00:00Z',
+  },
+];
+
+export function mockPageOf<T>(content: T[]): Page<T> {
+  return {
+    content,
+    page: 0,
+    size: 20,
+    totalPages: 1,
+    totalElements: content.length,
+  };
+}
+
+export { myAdvances, dispatcherQueue };

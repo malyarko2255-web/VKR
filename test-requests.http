@@ -1,0 +1,107 @@
+### ── KEYCLOAK: Получить токен водителя ───────────────────────────────────
+# @name loginDriver
+POST http://localhost:8180/realms/advance/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=advance-frontend&grant_type=password&username=driver1&password=test
+
+###
+
+### ── KEYCLOAK: Получить токен диспетчера ────────────────────────────────
+# @name loginDispatcher
+POST http://localhost:8180/realms/advance/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=advance-frontend&grant_type=password&username=dispatcher1&password=test
+
+###
+
+### ── ADVANCE: Создать заявку 1 (Топливо, авто-одобрение) ────────────────
+# Requires: loginDriver
+POST http://localhost:8080/api/v1/advances
+Authorization: Bearer {{loginDriver.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "driverId": "11111111-1111-1111-1111-111111111111",
+  "routeId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "tripStage": "IN_TRANSIT",
+  "advanceType": "FUEL",
+  "amount": 3500
+}
+
+###
+
+### ── ADVANCE: Создать заявку 2 (Ремонт, ручная проверка) ───────────────
+POST http://localhost:8080/api/v1/advances
+Authorization: Bearer {{loginDriver.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "driverId": "11111111-1111-1111-1111-111111111111",
+  "routeId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "tripStage": "IN_TRANSIT",
+  "advanceType": "REPAIR",
+  "amount": 12000
+}
+
+###
+
+### ── ADVANCE: Создать заявку 3 (Суточные) ──────────────────────────────
+POST http://localhost:8080/api/v1/advances
+Authorization: Bearer {{loginDriver.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "driverId": "22222222-2222-2222-2222-222222222222",
+  "routeId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+  "tripStage": "LOADING",
+  "advanceType": "PER_DIEM",
+  "amount": 1800
+}
+
+###
+
+### ── ADVANCE: Получить список заявок (диспетчер) ───────────────────────
+GET http://localhost:8080/api/v1/advances?status=DISPATCHER_REVIEW&page=0&size=20
+Authorization: Bearer {{loginDispatcher.response.body.access_token}}
+
+###
+
+### ── ADVANCE: Одобрить заявку ───────────────────────────────────────────
+# Подставьте реальный ID из предыдущего запроса
+@advanceId = PASTE_ADVANCE_ID_HERE
+
+POST http://localhost:8080/api/v1/advances/{{advanceId}}/approve
+Authorization: Bearer {{loginDispatcher.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "comment": "Одобрено для скриншота"
+}
+
+###
+
+### ── ADVANCE: Получить заявки водителя ─────────────────────────────────
+GET http://localhost:8080/api/v1/advances/my
+Authorization: Bearer {{loginDriver.response.body.access_token}}
+
+###
+
+### ── REFERENCE: Активный рейс водителя ─────────────────────────────────
+GET http://localhost:8080/api/v1/drivers/11111111-1111-1111-1111-111111111111/active-trip
+Authorization: Bearer {{loginDriver.response.body.access_token}}
+
+###
+
+### ── ACTUATOR: Здоровье сервисов ────────────────────────────────────────
+GET http://localhost:8080/actuator/health
+
+###
+
+GET http://localhost:8082/actuator/health
+
+###
+
+### ── KAFKA: Список топиков (через Kafka UI REST API) ───────────────────
+GET http://localhost:8090/api/clusters/advance-local/topics
