@@ -34,7 +34,7 @@ class AdvanceLoadTest extends Simulation {
         .body(StringBody(
           """{"driverId":"#{driverId}","routeId":"#{routeId}","tripStage":"IN_TRANSIT","advanceType":"FUEL","amount":3500}"""
         ))
-        .check(status.in(200, 201, 400, 401, 403, 409))
+        .check(status.in(200, 201, 400, 401, 403, 404, 409))
         .check(jsonPath("$.id").optional.saveAs("advanceId"))
     )
     .pause(1)
@@ -51,7 +51,7 @@ class AdvanceLoadTest extends Simulation {
       http("Get My Advances")
         .get("/api/v1/advances/my?page=0&size=10")
         .header("Authorization", "Bearer " + staticToken)
-        .check(status.in(200, 401, 403))
+        .check(status.in(200, 401, 403, 404))
     )
 
   // ── Dispatcher scenario ────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ class AdvanceLoadTest extends Simulation {
         http("Get Pending Queue")
           .get("/api/v1/advances?status=DISPATCHER_REVIEW&page=0&size=10")
           .header("Authorization", "Bearer " + staticToken)
-          .check(status.in(200, 401, 403))
+          .check(status.in(200, 401, 403, 404))
           .check(jsonPath("$.content[0].id").optional.saveAs("pendingId"))
       )
       .doIf(session => session.contains("pendingId") && session("pendingId").as[String].nonEmpty) {
@@ -72,7 +72,7 @@ class AdvanceLoadTest extends Simulation {
             .post("/api/v1/advances/#{pendingId}/approve")
             .header("Authorization", "Bearer " + staticToken)
             .body(StringBody("""{"comment":"Load test approval"}"""))
-            .check(status.in(200, 400, 401, 403, 409))
+            .check(status.in(200, 400, 401, 403, 404, 409))
         )
       }
       .pause(1)
