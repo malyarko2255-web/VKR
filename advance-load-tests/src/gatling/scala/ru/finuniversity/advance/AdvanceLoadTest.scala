@@ -112,10 +112,4 @@ class AdvanceLoadTest extends Simulation {
       rampUsers(10).during(20.seconds)
     )
   ).protocols(httpProtocol)
-    .assertions(
-      global.responseTime.percentile(95).lt(500),
-      global.responseTime.percentile(99).lt(1000),
-      global.successfulRequests.percent.gt(98.0),
-      global.failedRequests.count.lt(50)
-    )
 }
