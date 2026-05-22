@@ -30,14 +30,58 @@
 
     <build>
         <plugins>
+            <!-- Add src/gatling/scala as test source directory -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-gatling-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>src/gatling/scala</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-gatling-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>add-test-resource</goal></goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>src/gatling/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Compile Scala simulation sources -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>4.9.2</version>
+                <executions>
+                    <execution>
+                        <goals><goal>testCompile</goal></goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>io.gatling</groupId>
                 <artifactId>gatling-maven-plugin</artifactId>
                 <version>${gatling-maven-plugin.version}</version>
                 <configuration>
                     <simulationClass>ru.finuniversity.advance.AdvanceLoadTest</simulationClass>
-                    <simulationsFolder>${project.basedir}/src/gatling/scala</simulationsFolder>
-                    <resourcesFolder>${project.basedir}/src/gatling/resources</resourcesFolder>
                 </configuration>
             </plugin>
         </plugins>
