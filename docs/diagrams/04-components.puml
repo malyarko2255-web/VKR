@@ -1,0 +1,166 @@
+@startuml Диаграмма компонентов — библиотеки и зависимости
+!theme cerulean-outline
+skinparam componentBackgroundColor #E3F2FD
+skinparam componentBorderColor #1565C0
+skinparam packageBackgroundColor #F5F5F5
+skinparam packageBorderColor #BDBDBD
+skinparam interfaceBackgroundColor #FFFFFF
+skinparam interfaceBorderColor #1565C0
+skinparam arrowColor #1565C0
+skinparam nodeBackgroundColor #FAFAFA
+skinparam nodeBorderColor #BDBDBD
+
+package "advance-common" as Common #E8F5E9 {
+  component "JwtPrincipal" as JwtP
+  component "AdvanceRequest / Response DTOs" as DTOs
+  component "ErrorResponse / PageResponse" as Wrappers
+  component "GlobalExceptionHandler" as ExHandler
+}
+
+package "advance-gateway\n(Spring Cloud Gateway + WebFlux)" as GW #E3F2FD {
+  component "RouteLocator\n(routing rules)" as Routes
+  component "JwtAuthFilter\n(OAuth2 Resource Server)" as JwtFilter
+  component "RateLimitFilter\n(Redis token bucket)" as RateLimit
+  component "CircuitBreakerFilter\n(Resilience4j Reactor)" as CBFilter
+
+  frame "Ключевые библиотеки" {
+    component "[spring-cloud-starter-gateway]" as LibGW
+    component "[spring-boot-starter-webflux]" as LibWebFlux
+    component "[spring-boot-starter-oauth2-resource-server]" as LibOAuth2GW
+    component "[spring-boot-starter-data-redis-reactive]" as LibRedisReactive
+    component "[spring-cloud-starter-circuitbreaker-reactor-resilience4j]" as LibCBReactor
+  }
+}
+
+package "advance-identity\n(Spring MVC)" as Identity #E3F2FD {
+  component "UserController" as UserCtrl
+  component "TokenService" as TokenSvc
+  component "UserRepository (JPA)" as UserRepo
+
+  frame "Ключевые библиотеки" {
+    component "[spring-boot-starter-web]" as LibWebId
+    component "[spring-boot-starter-oauth2-resource-server]" as LibOAuth2Id
+    component "[spring-boot-starter-data-jpa]" as LibJPAId
+    component "[spring-boot-starter-data-redis]" as LibRedisId
+    component "[postgresql]" as LibPGId
+    component "[flyway-core]" as LibFlywayId
+  }
+}
+
+package "advance-core\n(Spring MVC)" as Core #E3F2FD {
+  component "AdvanceController" as AdvCtrl
+  component "AdvanceService" as AdvSvc
+  component "LimitService" as LimSvc
+  component "AdvanceValidator chain" as Validators
+  component "AdvanceRepository (JPA)" as AdvRepo
+  component "AdvanceEventPublisher\n(Kafka)" as EventPub
+  component "ScoringClient (Feign)" as ScorFeign
+  component "ReferenceClient (Feign)" as RefFeign
+
+  frame "Ключевые библиотеки" {
+    component "[spring-boot-starter-web]" as LibWebCore
+    component "[spring-boot-starter-data-jpa]" as LibJPACore
+    component "[spring-boot-starter-oauth2-resource-server]" as LibOAuth2Core
+    component "[spring-kafka]" as LibKafkaCore
+    component "[spring-boot-starter-data-redis]" as LibRedisCore
+    component "[spring-cloud-starter-openfeign]" as LibFeign
+    component "[spring-cloud-starter-circuitbreaker-resilience4j]" as LibCB
+    component "[springdoc-openapi-starter-webmvc-ui]" as LibSwagger
+    component "[mapstruct]" as LibMapstruct
+    component "[flyway-core]" as LibFlywayCore
+    component "[postgresql]" as LibPGCore
+  }
+}
+
+package "advance-payment\n(Spring MVC)" as Payment #E3F2FD {
+  component "PaymentController" as PayCtrl
+  component "PaymentService" as PaySvc2
+  component "KafkaAdvanceConsumer" as KafkaCons
+
+  frame "Ключевые библиотеки" {
+    component "[spring-boot-starter-web]" as LibWebPay
+    component "[spring-kafka]" as LibKafkaPay
+    component "[spring-boot-starter-data-jpa]" as LibJPAPay
+    component "[flyway-core]" as LibFlywayPay
+    component "[postgresql]" as LibPGPay
+  }
+}
+
+package "advance-scoring\n(Spring MVC)" as Scoring #E3F2FD {
+  component "ScoringController" as ScoreCtrl
+  component "ScoringService" as ScoreSvc2
+  component "TelemetryConsumer (Kafka)" as TelCons
+
+  frame "Ключевые библиотеки" {
+    component "[spring-boot-starter-web]" as LibWebScor
+    component "[spring-kafka]" as LibKafkaScor
+    component "[spring-boot-starter-data-jpa]" as LibJPAScor
+    component "[flyway-core]" as LibFlywayScor
+    component "[postgresql]" as LibPGScor
+  }
+}
+
+package "advance-reference\n(Spring MVC)" as Reference #E3F2FD {
+  component "ReferenceController" as RefCtrl
+  component "RouteService / TripService" as RefSvcComp
+
+  frame "Ключевые библиотеки" {
+    component "[spring-boot-starter-web]" as LibWebRef
+    component "[spring-boot-starter-data-jpa]" as LibJPARef
+    component "[spring-boot-starter-data-redis]" as LibRedisRef
+    component "[flyway-core]" as LibFlywayRef
+    component "[postgresql]" as LibPGRef
+  }
+}
+
+package "advance-notification\n(Spring MVC)" as Notification #E3F2FD {
+  component "NotificationService" as NotifSvcComp
+  component "AdvanceEventConsumer (Kafka)" as EvtCons
+
+  frame "Ключевые библиотеки" {
+    component "[spring-boot-starter-web]" as LibWebNotif
+    component "[spring-kafka]" as LibKafkaNotif
+    component "[spring-boot-starter-data-jpa]" as LibJPANotif
+    component "[flyway-core]" as LibFlywayNotif
+    component "[postgresql]" as LibPGNotif
+  }
+}
+
+package "advance-frontend\n(React 18 + TypeScript)" as Frontend #FFF9C4 {
+  component "DriverPage" as DriverPage
+  component "DispatcherDashboard" as DispPage
+  component "Redux Toolkit store" as Redux
+  component "axios HTTP client" as Axios
+  component "Mock Adapter (dev)" as MockAdapter
+
+  frame "Ключевые библиотеки" {
+    component "[@mui/material 5]" as LibMUI
+    component "[react-redux / @reduxjs/toolkit]" as LibRedux
+    component "[axios]" as LibAxios
+    component "[keycloak-js]" as LibKeycloak
+    component "[react-router-dom 6]" as LibRouter
+  }
+}
+
+package "advance-load-tests\n(Gatling 3.11)" as LoadTests #FCE4EC {
+  component "AdvanceLoadTest (Simulation)" as GatlingTest
+
+  frame "Ключевые библиотеки" {
+    component "[gatling-charts-highcharts 3.11.3]" as LibGatling
+    component "[scala-maven-plugin 4.9.2]" as LibScala
+  }
+}
+
+' Cross-module dependencies (compile/runtime)
+Core       ..> Common   : uses DTOs
+GW         ..> Common   : uses JwtPrincipal
+Identity   ..> Common   : uses Wrappers
+
+' Service communication
+ScorFeign  ..> Scoring  : HTTP REST
+RefFeign   ..> Reference : HTTP REST
+KafkaCons  ..> Core     : Kafka events
+EvtCons    ..> Core     : Kafka events
+TelCons    ..> Core     : Kafka events (scoring)
+
+@enduml

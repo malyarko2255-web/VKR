@@ -1,0 +1,182 @@
+@startuml Логическая схема данных IDEF1X — Система авансирования водителей
+!theme cerulean-outline
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1565C0
+skinparam classHeaderBackgroundColor #1565C0
+skinparam classHeaderFontColor #FFFFFF
+skinparam arrowColor #1565C0
+skinparam packageBackgroundColor #F5F5F5
+skinparam packageBorderColor #BDBDBD
+skinparam linetype ortho
+
+' ────────────────────────────────────────
+' Схема: advance_core_db
+' ────────────────────────────────────────
+package "advance_core_db" #EDE7F6 {
+
+  class "advances" as Advances << (E,#FFD700) Сущность >> {
+    <b>PK  id : UUID</b>
+    ----
+        request_no : VARCHAR(20) UNIQUE
+        driver_id : UUID  NOT NULL
+        route_id : UUID
+        trip_id : UUID
+        trip_stage : VARCHAR(20)  NOT NULL
+        advance_type : VARCHAR(30)  NOT NULL
+        amount : NUMERIC(12,2)  NOT NULL
+        status : VARCHAR(30)  NOT NULL
+        limit_available : NUMERIC(12,2)
+        auto_approved : BOOLEAN
+        score_at_creation : INTEGER
+        dispatcher_id : UUID
+        dispatcher_at : TIMESTAMPTZ
+        dispatcher_comment : TEXT
+        finance_id : UUID
+        finance_at : TIMESTAMPTZ
+        finance_comment : TEXT
+        rejection_reason : TEXT
+        notes : TEXT
+        created_at : TIMESTAMPTZ
+        updated_at : TIMESTAMPTZ
+        version : INTEGER
+  }
+
+  class "advance_history" as AdvHistory << (E,#FFD700) Сущность >> {
+    <b>PK  id : BIGSERIAL</b>
+    ----
+    <u>FK  advance_id : UUID</u>
+        from_status : VARCHAR(30)
+        to_status : VARCHAR(30)  NOT NULL
+        changed_by : UUID
+        comment : TEXT
+        changed_at : TIMESTAMPTZ
+  }
+}
+
+' ────────────────────────────────────────
+' Схема: advance_identity_db
+' ────────────────────────────────────────
+package "advance_identity_db" #E8F5E9 {
+
+  class "users" as Users << (E,#FFD700) Сущность >> {
+    <b>PK  id : UUID</b>
+    ----
+        keycloak_id : VARCHAR(36) UNIQUE
+        username : VARCHAR(100) UNIQUE
+        full_name : VARCHAR(200)
+        email : VARCHAR(200)
+        phone : VARCHAR(20)
+        role : VARCHAR(30)  NOT NULL
+        active : BOOLEAN
+        created_at : TIMESTAMPTZ
+        updated_at : TIMESTAMPTZ
+        version : INTEGER
+  }
+
+  class "audit_log" as AuditLog << (E,#FFD700) Сущность >> {
+    <b>PK  id : BIGSERIAL</b>
+    ----
+    <u>FK  user_id : UUID</u>
+        action : VARCHAR(100)
+        entity_type : VARCHAR(50)
+        entity_id : VARCHAR(50)
+        ip_address : VARCHAR(45)
+        details : JSONB
+        created_at : TIMESTAMPTZ
+  }
+}
+
+' ────────────────────────────────────────
+' Схема: advance_payment_db
+' ────────────────────────────────────────
+package "advance_payment_db" #FFF9C4 {
+
+  class "payments" as Payments << (E,#FFD700) Сущность >> {
+    <b>PK  id : UUID</b>
+    ----
+        advance_id : UUID UNIQUE
+        amount : NUMERIC(12,2)  NOT NULL
+        recipient_id : UUID  NOT NULL
+        recipient_phone : VARCHAR(20)
+        sbp_request_id : VARCHAR(100) UNIQUE
+        sbp_response_code : VARCHAR(20)
+        status : VARCHAR(20)  NOT NULL
+        error_message : TEXT
+        initiated_at : TIMESTAMPTZ
+        completed_at : TIMESTAMPTZ
+  }
+
+  class "outbox_events" as Outbox << (E,#FFD700) Сущность >> {
+    <b>PK  id : UUID</b>
+    ----
+        aggregate_type : VARCHAR(50)
+        aggregate_id : UUID  NOT NULL
+        event_type : VARCHAR(100)  NOT NULL
+        payload : JSONB  NOT NULL
+        status : VARCHAR(20)
+        retry_count : INTEGER
+        last_error : TEXT
+        created_at : TIMESTAMPTZ
+        processed_at : TIMESTAMPTZ
+  }
+}
+
+' ────────────────────────────────────────
+' Схема: advance_scoring_db
+' ────────────────────────────────────────
+package "advance_scoring_db" #FCE4EC {
+
+  class "driver_scores" as DriverScores << (E,#FFD700) Сущность >> {
+    <b>PK  id : UUID</b>
+    ----
+        driver_id : UUID UNIQUE
+        total_score : INTEGER  [0..100]
+        schedule_score : INTEGER
+        advance_closure_score : INTEGER
+        fuel_efficiency_score : INTEGER
+        default_history_score : INTEGER
+        tenure_score : INTEGER
+        trips_count : INTEGER
+        calculated_at : TIMESTAMPTZ
+  }
+
+  class "score_history" as ScoreHistory << (E,#FFD700) Сущность >> {
+    <b>PK  id : BIGSERIAL</b>
+    ----
+        driver_id : UUID  NOT NULL
+        total_score : INTEGER
+        calculated_at : TIMESTAMPTZ
+  }
+
+  class "telematics_events" as Telematics << (E,#FFD700) Сущность >> {
+    <b>PK  id : BIGSERIAL</b>
+    ----
+        driver_id : UUID  NOT NULL
+        vehicle_id : UUID
+        event_type : VARCHAR(50)
+        latitude : NUMERIC(10,7)
+        longitude : NUMERIC(10,7)
+        speed_kmh : INTEGER
+        fuel_level_pct : INTEGER
+        odometer_km : INTEGER
+        recorded_at : TIMESTAMPTZ  NOT NULL
+  }
+}
+
+' ────────────────────────────────────────
+' Связи (IDEF1X: идентифицирующие — сплошная, неидентифицирующие — пунктир)
+' ────────────────────────────────────────
+
+' advance_core
+Advances  "1" ||--o{ AdvHistory : "содержит\nаудит (advance_id)"
+
+' Логические (cross-schema) связи через UUID — показаны пунктиром
+Users      "1" ..o{ Advances   : "driver_id →\nusers.id"
+Users      "1" ..o{ AuditLog   : "user_id →\nusers.id"
+Advances   "1" ..o| Payments   : "advance_id →\nadvances.id"
+Users      "1" ..o{ DriverScores : "driver_id →\nusers.id"
+Users      "1" ..o{ ScoreHistory : "driver_id →\nusers.id"
+Users      "1" ..o{ Telematics   : "driver_id →\nusers.id"
+DriverScores "1" ..o{ ScoreHistory : "driver_id\n(денормализация)"
+
+@enduml

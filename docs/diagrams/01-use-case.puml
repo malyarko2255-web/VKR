@@ -1,0 +1,102 @@
+@startuml Use Case — Система управления авансами водителей
+!theme cerulean-outline
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseBorderColor #1565C0
+skinparam usecaseBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+
+left to right direction
+
+actor "Водитель"            as Driver
+actor "Диспетчер"           as Dispatcher
+actor "Финансовый\nменеджер" as FinManager
+actor "Финансовый\nдиректор" as FinDirector
+actor "Администратор"       as Admin
+actor "Платёжная\nсистема"  as PaymentSystem  #lightgrey
+actor "Система\nскоринга"   as ScoringSystem  #lightgrey
+
+rectangle "Advance Service" {
+
+  package "Управление заявками" {
+    usecase "Запросить аванс"            as UC1
+    usecase "Просмотреть статус заявки"  as UC2
+    usecase "Приложить чек (квитанцию)"  as UC3
+    usecase "Получить уведомление"        as UC4
+    usecase "Отменить заявку"            as UC5
+  }
+
+  package "Обработка диспетчером" {
+    usecase "Просмотреть очередь заявок" as UC6
+    usecase "Одобрить заявку"            as UC7
+    usecase "Отклонить заявку"           as UC8
+    usecase "Пакетное одобрение"         as UC9
+    usecase "Фильтровать заявки"         as UC10
+  }
+
+  package "Финансовый контроль" {
+    usecase "Финансовая проверка"        as UC11
+    usecase "Одобрить после проверки"    as UC12
+    usecase "Отклонить после проверки"   as UC13
+    usecase "Финальное одобрение"        as UC14
+  }
+
+  package "Платежи" {
+    usecase "Инициировать выплату"       as UC15
+    usecase "Подтвердить выплату"        as UC16
+    usecase "Зафиксировать выплату"      as UC17
+  }
+
+  package "Администрирование" {
+    usecase "Управление лимитами"        as UC18
+    usecase "Управление пользователями"  as UC19
+    usecase "Просмотр аналитики"         as UC20
+    usecase "Настройка уведомлений"      as UC21
+  }
+
+  package "Скоринг" {
+    usecase "Автоматическая проверка\nскоринга при создании" as UC22
+    usecase "Пересчёт скоринга\nпо телематике"              as UC23
+  }
+}
+
+Driver      --> UC1
+Driver      --> UC2
+Driver      --> UC3
+Driver      --> UC4
+Driver      --> UC5
+
+Dispatcher  --> UC6
+Dispatcher  --> UC7
+Dispatcher  --> UC8
+Dispatcher  --> UC9
+Dispatcher  --> UC10
+Dispatcher  --> UC4
+
+FinManager  --> UC11
+FinManager  --> UC12
+FinManager  --> UC13
+FinManager  --> UC4
+
+FinDirector --> UC14
+FinDirector --> UC4
+
+Admin       --> UC18
+Admin       --> UC19
+Admin       --> UC20
+Admin       --> UC21
+
+UC1         ..> UC22 : <<include>>
+UC7         ..> UC15 : <<include>>
+UC15        ..> PaymentSystem : <<extend>>
+UC16        --> PaymentSystem
+UC17        --> PaymentSystem
+
+ScoringSystem --> UC23
+UC22        ..> ScoringSystem : <<include>>
+
+UC9         ..> UC7  : <<include>>
+UC12        ..> UC7  : <<extend>>
+UC14        ..> UC12 : <<extend>>
+
+@enduml

@@ -1,0 +1,145 @@
+@startuml Диаграмма развёртывания — Kubernetes
+!theme cerulean-outline
+skinparam nodeBackgroundColor #E3F2FD
+skinparam nodeBorderColor #1565C0
+skinparam componentBackgroundColor #FFFFFF
+skinparam componentBorderColor #1565C0
+skinparam databaseBackgroundColor #FFF9C4
+skinparam databaseBorderColor #F57F17
+skinparam arrowColor #1565C0
+skinparam packageBackgroundColor #F5F5F5
+skinparam packageBorderColor #BDBDBD
+skinparam actorBorderColor #1565C0
+
+actor "Водитель\n(браузер)" as Driver
+actor "Диспетчер\n(браузер)" as Dispatcher
+
+cloud "Internet / TLS" as Internet
+
+node "Kubernetes Cluster" #EDE7F6 {
+
+  package "Namespace: advance" {
+
+    node "Ingress Controller\n(nginx)" as Ingress {
+      component "advance.example.com\nTLS termination" as IngressRule
+    }
+
+    node "advance-gateway\n(2 pods)" as Gateway {
+      component "Spring Cloud Gateway\n:8080" as GW
+      note right of GW : WebFlux, OAuth2\nResil4j circuit-breaker\nRedis rate-limit
+    }
+
+    node "advance-core\n(2–6 pods, HPA)" as Core {
+      component "advance-core\n:8081" as CoreSvc
+      note right of CoreSvc : Spring MVC, JPA\nKafka producer\nOpenFeign clients
+    }
+
+    node "advance-identity\n(1 pod)" as Identity {
+      component "advance-identity\n:8082" as IdentSvc
+    }
+
+    node "advance-payment\n(1–3 pods, HPA)" as Payment {
+      component "advance-payment\n:8083" as PaySvc
+    }
+
+    node "advance-scoring\n(1 pod)" as Scoring {
+      component "advance-scoring\n:8084" as ScoreSvc
+    }
+
+    node "advance-reference\n(1 pod)" as Reference {
+      component "advance-reference\n:8085" as RefSvc
+    }
+
+    node "advance-notification\n(1 pod)" as Notification {
+      component "advance-notification\n:8086" as NotifSvc
+    }
+
+    node "advance-frontend\n(2 pods)" as Frontend {
+      component "React SPA (nginx)\n:80" as FE
+    }
+  }
+
+  package "Namespace: infra" {
+
+    database "PostgreSQL\n(StatefulSet, 1 primary)" as PG {
+      component "advance_core_db" as DB1
+      component "advance_identity_db" as DB2
+      component "advance_payment_db" as DB3
+      component "advance_scoring_db" as DB4
+      component "advance_reference_db" as DB5
+      component "advance_notification_db" as DB6
+    }
+
+    node "Redis\n(StatefulSet)" as Redis {
+      component "Cache / Rate-limit\n/ Session store" as RedisInner
+    }
+
+    node "Apache Kafka\n(StatefulSet, 3 brokers)" as Kafka {
+      component "advance.created" as T1
+      component "advance.approved" as T2
+      component "advance.rejected" as T3
+      component "advance.payment.requested" as T4
+      component "scoring.telemetry" as T5
+    }
+  }
+
+  package "Namespace: monitoring" {
+
+    node "Prometheus" as Prometheus {
+      component "Scrape /actuator/metrics" as Scrape
+    }
+
+    node "Grafana" as Grafana {
+      component "Dashboard: Advance Service" as GrafanaDash
+    }
+  }
+}
+
+node "Внешние системы" #FFF3E0 {
+  component "Keycloak 23\n(OIDC/OAuth2)" as Keycloak
+  component "Внешняя платёжная\nсистема (REST)" as ExtPayment
+}
+
+Driver     --> Internet
+Dispatcher --> Internet
+Internet   --> IngressRule : HTTPS 443
+
+IngressRule --> FE       : /
+IngressRule --> GW       : /api/*
+
+GW --> CoreSvc    : HTTP
+GW --> IdentSvc   : HTTP
+GW --> PaySvc     : HTTP
+GW --> ScoreSvc   : HTTP
+GW --> RefSvc     : HTTP
+GW --> Keycloak   : token introspect
+
+CoreSvc  --> DB1
+CoreSvc  --> Redis     : limit cache
+CoreSvc  --> Kafka     : produce events
+CoreSvc  --> ScoreSvc  : Feign /scores/{id}
+CoreSvc  --> RefSvc    : Feign /routes, /trips
+
+IdentSvc --> DB2
+IdentSvc --> Redis     : session
+
+PaySvc      --> DB3
+PaySvc      --> Kafka      : consume advance.approved
+PaySvc      --> ExtPayment : REST
+
+ScoreSvc    --> DB4
+ScoreSvc    --> Kafka   : consume scoring.telemetry
+
+RefSvc      --> DB5
+RefSvc      --> Redis   : route cache
+
+NotifSvc    --> DB6
+NotifSvc    --> Kafka   : consume advance.*
+
+Prometheus  --> GW
+Prometheus  --> CoreSvc
+Prometheus  --> PaySvc
+Prometheus  --> ScoreSvc
+GrafanaDash --> Prometheus
+
+@enduml

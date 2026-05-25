@@ -1,0 +1,193 @@
+@startuml Диаграмма классов — advance-core
+!theme cerulean-outline
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1565C0
+skinparam classHeaderBackgroundColor #1565C0
+skinparam classHeaderFontColor #FFFFFF
+skinparam arrowColor #1565C0
+skinparam packageBackgroundColor #F5F5F5
+skinparam packageBorderColor #BDBDBD
+
+package "domain.entity" #FAFAFA {
+
+  class Advance {
+    - id : UUID
+    - requestNo : String
+    - driverId : UUID
+    - routeId : UUID
+    - tripStage : TripStage
+    - advanceType : AdvanceType
+    - amount : BigDecimal
+    - status : AdvanceStatus
+    - scoreAtCreation : Integer
+    - autoApproved : Boolean
+    - rejectionReason : String
+    - approvedBy : UUID
+    - version : Long
+    - createdAt : Instant
+    - updatedAt : Instant
+    + approve(approverId: UUID, comment: String) : void
+    + reject(reason: String) : void
+    + markPaid(paymentId: UUID) : void
+  }
+
+  class AdvanceHistory {
+    - id : UUID
+    - advanceId : UUID
+    - fromStatus : AdvanceStatus
+    - toStatus : AdvanceStatus
+    - changedBy : UUID
+    - comment : String
+    - changedAt : Instant
+  }
+
+  enum AdvanceStatus {
+    PENDING
+    DISPATCHER_REVIEW
+    FINANCE_REVIEW
+    APPROVED
+    REJECTED
+    PAID
+    CANCELLED
+  }
+
+  enum AdvanceType {
+    FUEL
+    LOADING_UNLOADING
+    PER_DIEM
+    REPAIR
+    PLANNED
+  }
+
+  enum TripStage {
+    LOADING
+    IN_TRANSIT
+    UNLOADING
+    RETURN
+  }
+}
+
+package "domain.service" #FAFAFA {
+
+  class AdvanceService {
+    - advanceRepository : AdvanceRepository
+    - historyRepository : AdvanceHistoryRepository
+    - limitService : LimitService
+    - scoringClient : ScoringClient
+    - referenceClient : ReferenceClient
+    - eventPublisher : AdvanceEventPublisher
+    - validators : List<AdvanceValidator>
+    + createAdvance(req: AdvanceRequest, principal: JwtPrincipal) : AdvanceResponse
+    + approve(id: UUID, cmd: ApproveCommand) : AdvanceResponse
+    + reject(id: UUID, cmd: RejectCommand) : AdvanceResponse
+    + getById(id: UUID) : AdvanceResponse
+    + getMyAdvances(driverId: UUID, filters: AdvanceFilters) : Page<AdvanceResponse>
+    + getAllAdvances(filters: AdvanceFilters) : Page<AdvanceResponse>
+    - isAutoApproved(score: int, amount: BigDecimal, threshold: BigDecimal) : boolean
+    - publishEvent(advance: Advance) : void
+    - saveHistory(advance: Advance, from: AdvanceStatus, by: UUID, comment: String) : void
+  }
+
+  class LimitService {
+    - advanceRepository : AdvanceRepository
+    - redisTemplate : StringRedisTemplate
+    + checkLimit(driverId: UUID, type: AdvanceType, amount: BigDecimal) : LimitCheckResult
+    + reserveLimit(driverId: UUID, type: AdvanceType, amount: BigDecimal) : void
+    + releaseLimit(driverId: UUID, type: AdvanceType, amount: BigDecimal) : void
+    + getDriverLimits(driverId: UUID) : List<DriverLimit>
+    - getMonthlyUsed(driverId: UUID, type: AdvanceType) : BigDecimal
+  }
+
+  class AdvanceEventPublisher {
+    - kafkaTemplate : KafkaTemplate
+    + publishCreated(advance: Advance) : void
+    + publishApproved(advance: Advance) : void
+    + publishRejected(advance: Advance) : void
+    + publishPaymentRequested(advance: Advance) : void
+  }
+}
+
+package "domain.validator" #FAFAFA {
+
+  interface AdvanceValidator {
+    + validate(req: AdvanceRequest, ctx: ValidationContext) : void
+  }
+
+  class OpenAdvanceValidator {
+    - advanceRepository : AdvanceRepository
+    + validate(req: AdvanceRequest, ctx: ValidationContext) : void
+  }
+
+  class LimitValidator {
+    - limitService : LimitService
+    + validate(req: AdvanceRequest, ctx: ValidationContext) : void
+  }
+
+  class TripStageValidator {
+    + validate(req: AdvanceRequest, ctx: ValidationContext) : void
+  }
+}
+
+package "api" #FAFAFA {
+
+  class AdvanceController {
+    - advanceService : AdvanceService
+    + createAdvance(req: AdvanceRequest, jwt: Jwt) : ResponseEntity
+    + getById(id: UUID, jwt: Jwt) : ResponseEntity
+    + getMyAdvances(filters: AdvanceFilters, jwt: Jwt) : ResponseEntity
+    + getAllAdvances(filters: AdvanceFilters, jwt: Jwt) : ResponseEntity
+    + approve(id: UUID, cmd: ApproveCommand, jwt: Jwt) : ResponseEntity
+    + reject(id: UUID, cmd: RejectCommand, jwt: Jwt) : ResponseEntity
+    + attachReceipt(id: UUID, file: MultipartFile, jwt: Jwt) : ResponseEntity
+    + getDriverLimits(driverId: UUID, jwt: Jwt) : ResponseEntity
+  }
+}
+
+package "infrastructure.repository" #FAFAFA {
+
+  interface AdvanceRepository {
+    + findById(id: UUID) : Optional<Advance>
+    + findByDriverIdOrderByCreatedAtDesc(driverId: UUID, pageable: Pageable) : Page<Advance>
+    + findByStatusIn(statuses: List<AdvanceStatus>, pageable: Pageable) : Page<Advance>
+    + existsByDriverIdAndStatusIn(driverId: UUID, statuses: List<AdvanceStatus>) : boolean
+    + sumAmountByDriverAndTypeAndStatusIn(driverId: UUID, type: AdvanceType, statuses: List<AdvanceStatus>) : BigDecimal
+  }
+
+  interface AdvanceHistoryRepository {
+    + findByAdvanceIdOrderByChangedAtAsc(advanceId: UUID) : List<AdvanceHistory>
+  }
+}
+
+package "infrastructure.client" #FAFAFA {
+
+  interface ScoringClient {
+    + getScore(driverId: UUID) : Integer
+  }
+
+  interface ReferenceClient {
+    + validateRoute(routeId: UUID) : Boolean
+    + getActiveTrip(driverId: UUID) : ActiveTripDto
+  }
+}
+
+AdvanceController  --> AdvanceService
+AdvanceService     --> AdvanceRepository
+AdvanceService     --> AdvanceHistoryRepository
+AdvanceService     --> LimitService
+AdvanceService     --> AdvanceEventPublisher
+AdvanceService     --> ScoringClient
+AdvanceService     --> ReferenceClient
+AdvanceService     "1" *-- "many" AdvanceValidator
+
+LimitService       --> AdvanceRepository
+
+OpenAdvanceValidator ..|> AdvanceValidator
+LimitValidator       ..|> AdvanceValidator
+TripStageValidator   ..|> AdvanceValidator
+
+Advance            "1" *-- "many" AdvanceHistory
+Advance             --> AdvanceStatus
+Advance             --> AdvanceType
+Advance             --> TripStage
+
+@enduml
